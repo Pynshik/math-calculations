@@ -28,7 +28,7 @@ describe('Form', () => {
     expect(component.queryAllByTestId("select-option")[2].selected).toBeFalsy();
     expect(component.queryAllByTestId("select-option")[3].selected).toBeFalsy();
 
-    expect(component.queryByTestId("firstValue").value).toEqual('0');
-    expect(component.queryByTestId("secondValue").value).toEqual('0');
+    expect(component.queryByTestId("firstValue").value).toEqual('');
+    expect(component.queryByTestId("secondValue").value).toEqual('');
   })
 })

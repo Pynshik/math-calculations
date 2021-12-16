@@ -1,67 +1,85 @@
-import React from "react";
-import { useState } from "react";
+import React, {useEffect, useReducer} from "react"
 
 import styles from "./Form.module.scss";
 
-const OPERANDS = ["+", "/", "%", ">"];
+const OPERATORS = {
+  SUM: '+',
+  DEVISION: '/',
+  REMINDER: '%',
+  LARGEST: '>'
+};
+
+const actionTypes = {
+  SET_FIRST_OPERATION_VALUE: "setFirstOperationValue",
+  SET_SECOND_OPERATION_VALUE: "setSecondOperationValue",
+  SET_OPERATOR: "setOperator",
+  SET_INITIAL_STATE: "setReset"
+}
+
+const initialState = {
+  firstOperationValue: '',
+  secondOperationValue: '',
+  operator: '+',
+  result: null
+}
+
+function reducer(state, action) {
+  switch(action.type) {
+    case actionTypes.SET_FIRST_OPERATION_VALUE:
+      return { ...state, firstOperationValue: action.payload }
+    case actionTypes.SET_SECOND_OPERATION_VALUE:
+      return { ...state, secondOperationValue: action.payload }
+    case actionTypes.SET_OPERATOR:
+      return {...state, operator: action.payload }
+    case actionTypes.SET_INITIAL_STATE:
+      return {...initialState};
+    case OPERATORS.SUM:
+      return {...state, result: state.firstOperationValue + state.secondOperationValue}
+    case OPERATORS.DEVISION:
+      return {...state, result: state.firstOperationValue / state.secondOperationValue}
+    case OPERATORS.REMINDER:
+      return {...state, result: state.firstOperationValue % state.secondOperationValue}
+    case OPERATORS.LARGEST:
+      return {...state, result: Number(state.firstOperationValue) > Number(state.secondOperationValue)
+          ? Number(state.firstOperationValue)
+          : Number(state.secondOperationValue)}
+    default:
+      break;
+  }
+}
+
 
 export default function Form({ changeResults }) {
-  const [firstValue, setFirstValue] = useState(0);
-  const [secondValue, setSecondValue] = useState(0);
-  const [operator, setOperator] = useState("+");
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  const handleSubmit = () => {
-    let result;
+  useEffect(() => {
+    if(state.result) {
+      const resultString = state.operator !== ">"
+        ? `${state.firstOperationValue} ${state.operator} ${state.secondOperationValue} = ${state.result}`
+        : `the largest of ${state.firstOperationValue} and ${state.secondOperationValue} is ${state.result}`;
 
-    switch (operator) {
-      case "+":
-        result = Number(firstValue) + Number(secondValue);
-        break;
-      case "/":
-        result = Number(firstValue) / Number(secondValue);
-        break;
-      case "%":
-        result = Number(firstValue) % Number(secondValue);
-        break;
-      case ">":
-        result =
-          Number(firstValue) > Number(secondValue)
-            ? Number(firstValue)
-            : Number(secondValue);
-        break;
-      default:
-        break;
+      changeResults(resultString);
+
+      dispatch({ type: actionTypes.SET_INITIAL_STATE, payload: initialState})
     }
+  });
 
-    const resultString =
-      operator !== ">"
-        ? `${firstValue} ${operator} ${secondValue} = ${result}`
-        : `the largest of ${firstValue} and ${secondValue} is ${result}`;
 
-    changeResults(resultString);
-    clearForm();
-  };
-
-  const clearForm = () => {
-    setFirstValue(0);
-    setSecondValue(0);
-    setOperator("+");
-  };
 
   return (
     <div className={styles['form-container']}>
       <input
         type="number"
-        value={firstValue}
+        value={state.firstOperationValue}
         data-testid="firstValue"
-        onChange={(e) => setFirstValue(e.target.value)}
+        onChange={(e) => dispatch({type: actionTypes.SET_FIRST_OPERATION_VALUE, payload: Number(e.target.value)})}
       />
       <select
         data-testid="select"
-        value={operator}
-        onChange={(e) => setOperator(e.target.value)}
+        value={state.operator}
+        onChange={(e) => dispatch({type: actionTypes.SET_OPERATOR, payload: e.target.value})}
       >
-        {OPERANDS.map((operand) => (
+        {Object.values(OPERATORS).map((operand) => (
           <option data-testid="select-option" value={operand} key={operand}>
             {operand}
           </option>
@@ -69,11 +87,11 @@ export default function Form({ changeResults }) {
       </select>
       <input
         type="number"
-        value={secondValue}
+        value={state.secondOperationValue}
         data-testid="secondValue"
-        onChange={(e) => setSecondValue(e.target.value)}
+        onChange={(e) => dispatch({type: actionTypes.SET_SECOND_OPERATION_VALUE, payload: Number(e.target.value)})}
       />
-      <button data-testid="inputSubmit" onClick={handleSubmit}>
+      <button data-testid="submit" onClick={() => dispatch({ type: state.operator })}>
         Run
       </button>
     </div>
